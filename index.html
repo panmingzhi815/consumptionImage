@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+    <meta charset="UTF-8">
+    <title>消费监控</title>
+    <script src="js/jquery.min.js"></script>
+    <style>
+        .full-size {
+            width: 100%;
+            height: 100%;
+        }
+
+        .showWin {
+            padding-top: 50px;
+            padding-left: 20px;
+            width: 650px;
+            height: 350px;
+            margin: 100px auto;
+            border: 8px solid #aabbcc;
+            border-radius: 8px;
+        }
+
+        .showImage {
+            width: 250px;
+            height: 250px;
+            float: left;
+        }
+
+        .showUser {
+            float: left;
+            width: 300px;
+            padding-left: 20px;
+        }
+
+        .showUserTitle {
+            width: 120px;
+            font-size: 16pt;
+            text-align: left;
+            line-height: 80px;
+            float: left;
+            font-weight: bold;
+        }
+
+        .showUserInfo {
+            width: 150px;
+            font-size: 16pt;
+            float: left;
+            text-align: left;
+            line-height: 80px;
+        }
+    </style>
+</head>
+<body class="full-size">
+<div class="showWin">
+    <div class="showImage">
+        <img id="showImage" src="image/default_user_512.png" class="full-size" alt="">
+    </div>
+
+    <div class="showUser">
+        <p>
+            <label class="showUserTitle" for="showUserIdentifier">用户编号:</label>
+            <label id="showUserIdentifier" class="showUserInfo"> &nbsp;</label>
+        </p>
+        <br>
+        <p>
+            <label class="showUserTitle" for="showUserName">用户姓名:</label>
+            <label id="showUserName" class="showUserInfo"> &nbsp;</label>
+        </p>
+        <br>
+        <p>
+            <label class="showUserTitle" for="showUserGroup">用户部门:</label>
+            <label id="showUserGroup" class="showUserInfo"> &nbsp;</label>
+        </p>
+    </div>
+</div>
+</body>
+</html>
+
+<script>
+    //设备编号
+    var deviceIdentifier = "199001";
+    //服务器地址
+    var serverIp = "192.168.2.21";
+    //刷新间隔
+    var refreshTime = 500;
+
+    var lastUserId = "";
+
+
+    function jsoncallback(json) {
+        if(lastUserId === json["cardUserId"]){
+            return;
+        }
+        lastUserId = json["lastUserId"];
+        $("#showUserIdentifier").html(json["cardUserIdentifier"]);
+        $("#showUserName").html(json["cardUserName"]);
+        $("#showUserGroup").html(json["cardUserGroup"]);
+        $("#showImage").attr('src', "http://" + serverIp + ":8891/currentUserImage?cardUserId=" + json["cardUserId"]);
+    }
+
+    function refreshHistory() {
+        console.log("正在刷新新消费");
+        $.ajax({
+            url: "http://" + serverIp + ":8891/currentUserInfo?timestamp=" + Date.parse(new Date()),
+            type: "GET",
+            dataType: 'jsonp',
+            data: {"deviceIdentifier": deviceIdentifier, "jsoncallback": "jsoncallback"},
+            timeout: 2000,
+            success: function () {
+                console.log("刷新新消费成功");
+                autoTimeOut();
+            },
+            error: function () {
+                autoTimeOut();
+            }
+        });
+    }
+
+    function autoTimeOut() {
+        setTimeout(refreshHistory, refreshTime)
+    }
+
+    autoTimeOut();
+</script>
